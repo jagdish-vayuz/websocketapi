@@ -5,11 +5,6 @@ const app = express()
 const Socket = require("websocket").server
 const http = require("http")
 
-Meteor.startup(() => {
-
-});
-
-
 const server = http.createServer((req, res) => { })
 
 server.listen(process.env.PORT || 5000, () => {
