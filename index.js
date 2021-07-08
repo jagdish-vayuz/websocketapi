@@ -1,4 +1,3 @@
-import { Meteor } from 'meteor/meteor';
 
 const express = require("express")
 const app = express()
