@@ -1,11 +1,21 @@
+import { Meteor } from 'meteor/meteor';
+
 const express = require("express")
 const app = express()
 
 const Socket = require("websocket").server
 const http = require("http")
 
+Meteor.startup(() => {
+
+});
+
+
 const server = http.createServer((req, res) => { })
 
+server.listen(process.env.PORT || 5000, () => {
+    console.log("Listening on port 5000...")
+})
 
 const webSocket = new Socket({ httpServer: server })
 
@@ -23,17 +33,20 @@ webSocket.on('request', (req) => {
 
         switch (data.type) {
             case "store_user":
+
                 if (user != null) {
                     return
                 }
+
                 const newUser = {
                     conn: connection,
                     username: data.username
                 }
+
                 users.push(newUser)
                 console.log(newUser.username)
-                break
 
+                break
             case "store_offer":
                 if (user == null)
                     return
@@ -51,32 +64,32 @@ webSocket.on('request', (req) => {
                 user.candidates.push(data.candidate)
                 console.log('----store candidate---')
                 break
-
             case "send_answer":
                 if (user == null) {
                     return
                 }
+
                 sendData({
                     type: "answer",
-                    answer: data.answer,
-                    user:user,
+                    answer: data.answer
                 }, user.conn)
                 break
-
             case "send_candidate":
                 if (user == null) {
                     return
                 }
+
                 sendData({
                     type: "candidate",
                     candidate: data.candidate
                 }, user.conn)
-                break
 
+                break
             case "join_call":
                 if (user == null) {
                     return
                 }
+
                 sendData({
                     type: "offer",
                     offer: user.offer
@@ -88,6 +101,8 @@ webSocket.on('request', (req) => {
                         candidate: candidate
                     }, connection)
                 })
+
+
                 break
         }
     })
@@ -114,6 +129,4 @@ function findUser(username) {
     }
 }
 
-server.listen( process.env.PORT || 5000, () => {
-    console.log("Listening on port 5000...")
-}) 
+
