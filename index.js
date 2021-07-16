@@ -16,18 +16,10 @@ let users = [];
 let users2 = [];
 let rooms = [];
 let time;
+var startTime;
 
 webSocket.on("request", (req) => {
   const connection = req.accept();
-
-  setInterval(() => {
-    time = clock();
-    let t = {
-      type: "timer",
-      time: time,
-    };
-    connection.send(JSON.stringify(t));
-  }, 1000);
 
   connection.on("message", (message) => {
     const data = JSON.parse(message.utf8Data);
@@ -115,7 +107,26 @@ webSocket.on("request", (req) => {
         break;
 
       //group video calling
+      case "create_room":
+        rooms.push(data.meeting_id);
+        break;
+
+      case "find_room":
+        sendData(
+          {
+            type: "room_avail",
+            username: data.username,
+            meeting_id: data.meeting_id,
+            avail: findRoom(data.meeting_id),
+          },
+          connection
+        );
+
+        break;
+
       case "join":
+        console.log("join");
+
         if (!user2) {
           users2.push({
             username: data.username,
@@ -139,18 +150,21 @@ webSocket.on("request", (req) => {
             );
           }
         });
-        /* if (total_user > 1) {
-                      users2.forEach((user) => {
-                        setInterval(() => {
-                          time = clock();
-                          let t = {
-                            type: "timer",
-                            time: time,
-                          };
-                          user.conn.send(JSON.stringify(t));
-                        }, 1000);
-                      });
-                    } */
+        if (total_user == 2) {
+          startTime = Date.now();
+        }
+        if (total_user > 1) {
+          users2.forEach((user) => {
+            setInterval(() => {
+              time = clock();
+              let t = {
+                type: "timer",
+                time: time,
+              };
+              user.conn.send(JSON.stringify(t));
+            }, 1000);
+          });
+        }
         break;
 
       case "offer":
@@ -190,6 +204,7 @@ webSocket.on("request", (req) => {
         break;
 
       case "candidate":
+        console.log("candidate");
         let sendto;
         users2.forEach((user) => {
           if (user.username == data.to) {
@@ -242,9 +257,13 @@ function findUser2(username) {
   return false;
 }
 
-function findMeeting(meeting_id) {
+function findRoom(meeting_id) {
+  console.log(meeting_id + "-----" + rooms.length);
   for (let i = 0; i < rooms.length; i++) {
-    if (rooms[i].meeting_id == meeting_id) return rooms[i].meeting_id;
+    if (rooms[i] == meeting_id) {
+      console.log(rooms[i]);
+      return true;
+    }
   }
   return false;
 }
@@ -254,10 +273,11 @@ var min = 00;
 var sec = 00;
 
 function clock() {
-  sec += 1;
+  sec = Math.trunc((Date.now() - startTime) / 1000);
   if (sec == 60) {
     min += 1;
-    sec = 00;
+    startTime = Date.now();
+    sec = 0;
     if (min == 60) {
       min = 00;
       hr += 1;
