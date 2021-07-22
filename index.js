@@ -17,6 +17,15 @@ let users2 = [];
 let rooms = [];
 let time;
 var startTime;
+var hr = 00;
+var min = 00;
+var sec = 00;
+
+let time1;
+var startTime1;
+var hr1 = 00;
+var min1 = 00;
+var sec1 = 00;
 
 webSocket.on("request", (req) => {
   const connection = req.accept();
@@ -66,6 +75,7 @@ webSocket.on("request", (req) => {
           },
           user.conn
         );
+
         break;
       case "send_candidate":
         if (user == null) {
@@ -82,6 +92,7 @@ webSocket.on("request", (req) => {
 
         break;
       case "join_call":
+        console.log("join call");
         if (user == null) {
           return;
         }
@@ -102,6 +113,20 @@ webSocket.on("request", (req) => {
             },
             connection
           );
+        });
+
+        startTime1 = Date.now();
+
+        users.forEach((user) => {
+          setInterval(() => {
+            time1 = clock1();
+            let t1 = {
+              type: "timer",
+              time: time1,
+            };
+            user.conn.send(JSON.stringify(t1));
+            connection.send(JSON.stringify(t1));
+          }, 1000);
         });
 
         break;
@@ -225,6 +250,10 @@ webSocket.on("request", (req) => {
   });
 
   connection.on("close", (reason, description) => {
+    hr1 = 00;
+    min1 = 00;
+    sec1 = 00;
+    startTime1 = Date.now();
     users.forEach((user) => {
       if (user.conn == connection) {
         users.splice(users.indexOf(user), 1);
@@ -268,10 +297,6 @@ function findRoom(meeting_id) {
   return false;
 }
 
-var hr = 00;
-var min = 00;
-var sec = 00;
-
 function clock() {
   sec = Math.trunc((Date.now() - startTime) / 1000);
   if (sec == 60) {
@@ -287,5 +312,23 @@ function clock() {
     hr: hr,
     min: min,
     sec: sec,
+  };
+}
+
+function clock1() {
+  sec1 = Math.trunc((Date.now() - startTime1) / 1000);
+  if (sec1 == 60) {
+    min1 += 1;
+    startTime1 = Date.now();
+    sec1 = 0;
+    if (min1 == 60) {
+      min1 = 00;
+      hr1 += 1;
+    }
+  }
+  return {
+    hr: hr1,
+    min: min1,
+    sec: sec1,
   };
 }
